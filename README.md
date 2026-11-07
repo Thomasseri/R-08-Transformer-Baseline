@@ -52,8 +52,8 @@ Abbiamo ricontrollato il codice pubblicato e le misure hardware su Apple M1 Max 
 |---|---|---|---|---|
 | 1 | Avvio moduli Python (`modeling_geodesic.py`, `geodesic_stages*_model.py`, `modeling_transformer.py`) | Pronti all'uso | `SyntaxError` all'import perché `from __future__ import annotations` si trovava dopo l'intestazione di licenza | **Corretto** in questo aggiornamento (spostata la riga di import in cima al file; licenza invariata) |
 | 2 | Caricamento `model.safetensors` con Faccia di Veglia (`watchman.*`) | `load_state_dict(strict=True)` e rotazione finale non accoppiata | Falliva per 8 buffer deterministici `watchman.*` non inclusi nel file `.safetensors`, e `inject_geodesic_nonlinear_entanglement` non applicava la pre-rotazione ortogonale `q_0^T` abbinata a `q_lic` | **Corretto** in `modeling_geodesic.py` e `watchman_keystone_r08.py`; corretto anche l'URL di fallback verso `SentinelHub/R-08-v7.2a` (pesi disponibili nelle **GitHub Releases**) |
-| 3 | Memoria in inferenza (`float32`, Apple M1 Max) | Footprint RAM totale indicato come `~120–140 MB` (`~240 MB` Transformer) | **Memoria GPU MPS di picco**: `214,6 MB` (`Cristallo-50M`, `46,4M` param), `261,4 MB` (`Transformer`, `58,9M` param), `375,8 MB` (`R-08 3 sfere`, `57,1M` param). **RAM processo (RSS)** dopo caricamento `mmap=True`: `401–461 MB` | Aggiornato con le misure reali del benchmark A6 |
-| 4 | Velocità ed energia per token generato (decodifica continua 64→192 token su M1 Max `float32`) | Indicati `~140 tok/s` in generazione singola | **Velocità media misurata**: `19,2 ± 1,5 tok/s` (`R-08 3 sfere`), `44,7 ± 2,5 tok/s` (`Cristallo-50M`), `83,2 ± 1,1 tok/s` (`Transformer`). **Energia netta per token**: `331 ± 28 mJ/tok` (`Cristallo`), `342 ± 50 mJ/tok` (`Transformer`), `521 ± 85 mJ/tok` (`R-08 3 sfere`, potenza istantanea `+9,8 W`) | Aggiornato con i dati misurati in utilizzo reale (inferenza) |
+| 3 | Memoria in inferenza (`float32`, Apple M1 Max) | ~~Confronto A6 precedente: misure non omogenee ritirate.~~ | **Confronto A6 aggiornato (modelli pubblici)** — Memoria GPU MPS di picco: `261,4 MB` (`Transformer`, `58,9M` param), `375,8 MB` (`R-08 3 sfere`, `57,1M` param). **RAM processo (RSS)** dopo caricamento `mmap=True`: `401–461 MB` | Aggiornato: il dato storico resta visibile ma barrato; il confronto corrente include solo modelli pubblicati |
+| 4 | Velocità ed energia per token generato (decodifica continua 64→192 token su M1 Max `float32`) | ~~Confronto A6 precedente: misure non omogenee ritirate.~~ | **Confronto A6 aggiornato (modelli pubblici)** — Velocità: `19,2 ± 1,5 tok/s` (`R-08 3 sfere`), `83,2 ± 1,1 tok/s` (`Transformer`). Energia netta: `342 ± 50 mJ/tok` (`Transformer`), `521 ± 85 mJ/tok` (`R-08 3 sfere`, potenza istantanea `+9,8 W`) | Aggiornato: il dato storico resta visibile ma barrato; il confronto corrente include solo modelli pubblicati |
 
 ---
 
@@ -75,18 +75,35 @@ Per valutare in modo rigoroso, indipendente e scientificamente riproducibile le 
    - **Sentinel R-08 (v7 Pyramid):** **Soli 2 strati di attenzione densa** assistiti da 3 geosfere triangolari a 80 facce e centro piramidale a 1-hop.
 
 
-## 📊 Benchmark Comparativi A/B (Risultati di Laboratorio)
+## ~~📊 Benchmark Comparativi A/B (archivio)~~
 
-| Metrica di Laboratorio | Sentinel R08 (v7) | 🚀 [**Sentinel R-08 v7.2**](https://huggingface.co/SentinelHub/R-08-v7.2) | 🌟 [**Sentinel R-08 v7.2a**](https://github.com/Thomasseri/R-08-v7.2a) | Transformer Baseline (185k Pre) | Transformer Baseline (10k Mid) | Vantaggio Architetturale Famiglia R08 |
+> La tabella seguente è mantenuta per trasparenza, ma è **superata**: mescolava checkpoint a `185k` e `10k` step, chiamava “A/B” condizioni non omogenee e trattava come misure di laboratorio throughput MPS e memoria KV che non erano misure complete e comparabili. I valori storici sono quindi barrati e non vanno usati per dichiarare un vincitore architetturale.
+
+| Metrica di Laboratorio | Sentinel R08 (v7) | R-08 v7.2 | R-08 v7.2a | Transformer (185k Pre) | Transformer (10k Mid) | Lettura storica ritirata |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: |
-| **Parametri Totali** | **44.5M** | **51.6M** | **51.6M** | 44.9M | 44.9M | Pesi equivalenti (~45-51M) |
-| **Strati di Attenzione Densa** | **2 strati** | **2 strati** | **2 strati** | 14 strati | 14 strati | **-85.7% strati densi** |
-| **Vocabolario Subword** | **1.251 pezzi** | **1.251 pezzi** | **1.251 pezzi** | 1.251 pezzi | 1.251 pezzi | Identico (1.2k) |
-| **BLiMP-IT (Accuratezza Grammaticale)** | **80.95%** | **82.02%** | **82.51%** | 82.53% | **85.84%** | Migliore R-08: 82.51% con 2 strati |
-| **MultiBLiMP (Ragionamento Sintattico)** | **73.46%** | **73.46%** | **76.71%** | 85.15% | **86.83%** | Solida base logica |
-| **Resistenza Allucinazioni (Zero-Shot)** | **62.5%** *(Fatti 4/4)* | **56.2%** *(Fatti 3/4)* | **56.2%** *(Fatti 4/4 100%)* | 56.2% | **68.8%** *(Fatti 4/4)* | R08 zero allucinazioni sui fatti |
-| **Throughput Training (MPS)** | **~10.150 tok/s** | **~7.200 tok/s** | **~7.694 tok/s** | ~8.650 tok/s | ~8.650 tok/s | Elevata efficienza computazionale |
-| **Impronta Memoria KV-Cache (512 ctx)** | **0.8 MB** *(2.1 MB/seq)* | **0.8 MB** *(2.1 MB/seq)* | **0.8 MB** *(2.1 MB/seq)* | 5.6 MB *(14.7 MB/seq)* | 5.6 MB *(14.7 MB/seq)* | **-85.7% traffico RAM/Cache** 💾 |
+| Parametri Totali | ~~44.5M~~ | ~~51.6M~~ | ~~51.6M~~ | ~~44.9M~~ | ~~44.9M~~ | ~~Pesi equivalenti~~ |
+| Strati di Attenzione Densa | ~~2~~ | ~~2~~ | ~~2~~ | ~~14~~ | ~~14~~ | ~~−85.7% strati densi~~ |
+| Vocabolario Subword | ~~1.251~~ | ~~1.251~~ | ~~1.251~~ | ~~1.251~~ | ~~1.251~~ | ~~Identico~~ |
+| BLiMP-IT | ~~80.95%~~ | ~~82.02%~~ | ~~82.51%~~ | ~~82.53%~~ | ~~85.84%~~ | ~~Vincitore R-08~~ |
+| MultiBLiMP | ~~73.46%~~ | ~~73.46%~~ | ~~76.71%~~ | ~~85.15%~~ | ~~86.83%~~ | ~~Base logica~~ |
+| Zero-shot | ~~62.5%~~ | ~~56.2%~~ | ~~56.2%~~ | ~~56.2%~~ | ~~68.8%~~ | ~~Nessuna allucinazione~~ |
+| Throughput training MPS | ~~10,150 tok/s~~ | ~~7,200 tok/s~~ | ~~7,694 tok/s~~ | ~~8,650 tok/s~~ | ~~8,650 tok/s~~ | ~~Efficienza computazionale~~ |
+| KV-cache a 512 token | ~~0.8 MB~~ | ~~0.8 MB~~ | ~~0.8 MB~~ | ~~5.6 MB~~ | ~~5.6 MB~~ | ~~−85.7% traffico RAM~~ |
+
+## 📊 Confronto aggiornato — checkpoint documentati
+
+> **Protocollo e limiti.** I quattro checkpoint qui sotto usano il vocabolario da 1.251 pezzi e sono valutazioni post-midtrain a 10k step riportate nei rispettivi `summary.json`. BLiMP-IT conta 3.481 coppie e MultiBLiMP-ITA 2.916. Il confronto descrive questi checkpoint, **non dimostra** che una topologia sia la causa del risultato: le ricette e le storie di addestramento restano specifiche di ciascuna release.
+
+| Metrica verificata | Sentinel R-08 v7 | Sentinel R-08 v7.2 | Sentinel R-08 v7.2a | Transformer Baseline | Lettura corretta |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| Parametri dichiarati | 44.6M | 51.6M | 51.6M | 44.906M | Architetture di scala simile, non identiche |
+| Strati di attenzione densa | 2 | 2 | 2 | 14 | Differenza strutturale, non una misura di qualità |
+| Vocabolario | 1.251 pezzi | 1.251 pezzi | 1.251 pezzi | 1.251 pezzi | Uguale vocabolario |
+| BLiMP-IT (3.481 coppie) | 80.95% | 82.02% | 82.51% | **85.84%** | Il Transformer è avanti di 3.33 punti sul miglior R-08 |
+| MultiBLiMP-ITA (2.916 coppie) | 73.46% | 73.46% | 76.71% | **86.83%** | Il Transformer è avanti di 10.12 punti sul miglior R-08 |
+| Risposte zero-shot (16 domande) | 10/16 | 9/16 | 9/16 | 11/16 | Campione troppo piccolo: nessuna classifica o affermazione sulle allucinazioni |
+| Throughput di training MPS | n.d. | n.d. | n.d. | n.d. | Nessun test omogeneo su modello completo pubblicato: i vecchi numeri sono ritirati |
+| KV-cache a 512 token | stima 0.8 MB | stima 0.8 MB | stima 0.8 MB | stima 5.6 MB | Stima strutturale, non RAM di picco misurata né prova di velocità/energia |
 
 
 ## 📈 Grafici Lineari di Efficienza Hardware & Token
@@ -100,11 +117,8 @@ Per valutare in modo rigoroso, indipendente e scientificamente riproducibile le 
 
 ## 🔬 Considerazioni e Riscontri Scientifici
 
-1. **Trade-off Accuratezza vs Risorse:**
-   - Il Transformer denso a 14 strati raggiunge un'accuratezza linguistica dell'85.84% su BLiMP-IT grazie all'elevato numero di matrici $Q \times K^T$ dense su tutta la profondità della rete.
-   - Tuttavia, questo comporta un'impronta di memoria **KV-Cache 7 volte maggiore** (5.6 MB vs 0.8 MB per sequenza).
-2. **Efficienza Geodetica di R-08:**
-   - Sentinel R-08 raggiunge l'**80.95%** su BLiMP-IT eliminando l'85.7% dell'attenzione densa e sostituendola con il routing sferico triangolare a 80 facce, dimostrando un'efficienza ideale per Edge AI e dispositivi embedded a batteria.
+1. **Risultato osservato, non causalità:** nel set documentato il Transformer ottiene `85.84%` su BLiMP-IT e `86.83%` su MultiBLiMP-ITA; il migliore R-08 è v7.2a con `82.51%` e `76.71%`. Il confronto non isola la sola architettura, quindi non attribuisce causalmente il divario agli strati densi.
+2. **Memoria e velocità:** `0.8 MB` contro `5.6 MB` è una stima strutturale della KV-cache a 512 token. Non sostituisce una misura di RAM di picco, energia o throughput sull'intero modello; tali risultati richiedono un protocollo comune e una nuova pubblicazione.
 
 
 ## 🚀 Utilizzo Rapido (Inference Quickstart)
