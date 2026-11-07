@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.DS_Store
+*.pt
+*.safetensors
+*.gguf
+upload_to_hf.py

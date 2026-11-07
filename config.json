@@ -1,0 +1,50 @@
+{
+  "architectures": [
+    "BaselineTransformer"
+  ],
+  "model_type": "gpt2",
+  "auto_map": {
+    "AutoConfig": "modeling_transformer.TransformerConfig",
+    "AutoModel": "modeling_transformer.BaselineTransformer",
+    "AutoModelForCausalLM": "modeling_transformer.BaselineTransformer"
+  },
+  "vocab_size": 1251,
+  "n_positions": 256,
+  "n_embd": 512,
+  "d_model": 512,
+  "n_layer": 14,
+  "n_layers": 14,
+  "n_head": 8,
+  "n_heads": 8,
+  "head_dim": 64,
+  "n_inner": 2048,
+  "mlp_dim": 2048,
+  "max_seq_len": 256,
+  "dropout": 0.0,
+  "activation_function": "gelu",
+  "layer_norm_epsilon": 1e-05,
+  "num_parameters": 44905984,
+  "weight_tying": true,
+  "pretrain_steps": 185000,
+  "midtrain_steps": 10000,
+  "training_corpus": "v22_chinchilla_mix (740M tokens, Chinchilla-optimal)",
+  "midtrain_corpus": "v23_midtrain (curated high-density knowledge & dialogues)",
+  "author": "Thomas Seri (Sentinel)",
+  "project": "Sentinel R-08 Architectural Benchmark Suite",
+  "comparative_target": "Sentinel R-08 v7 Pyramid",
+  "gguf_file": "transformer-baseline-45m-f16.gguf",
+  "benchmarks": {
+    "blimp_it_pretrain": 82.53,
+    "blimp_it_midtrain": 85.84,
+    "multiblimp_pretrain": 85.15,
+    "multiblimp_midtrain": 86.83,
+    "truth_rate_pretrain": 56.2,
+    "truth_rate_midtrain": 68.8,
+    "training_throughput_tok_per_sec": 8650,
+    "energy_per_token_mj": 3.3,
+    "kv_cache_ram_at_512_mb": 5.6
+  },
+  "license": "R08-Non-Commercial-Ethical-License-v2.0",
+  "jurisdiction": "Court of Milan (Sezione Specializzata in Materia di Impresa), Italy",
+  "prohibited_uses": "Commercial, Military, Defense, Clean-Room Reverse Engineering, Model Distillation"
+}
